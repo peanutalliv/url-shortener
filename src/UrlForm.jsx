@@ -1,73 +1,55 @@
 import React, { useState } from 'react';
 
-export default function UrlForm({ setShortUrl, setError }) {
+function UrlForm() {
   const [originalUrl, setOriginalUrl] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [error, setError] = useState('');
 
-  // Simple URL validation function
-  const isValidUrl = (url) => {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
-
-  // Set backend URL directly to the Render URL for production
-  const API_BASE = 'https://url-shortener-c505.onrender.com';
-
-  const handleShorten = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
     setShortUrl('');
-
-    if (!originalUrl) {
-      setError('Please enter a URL');
-      return;
-    }
-
-    if (!isValidUrl(originalUrl)) {
-      setError('Please enter a valid URL (must start with http:// or https://)');
-      return;
-    }
-
     try {
-      const response = await fetch(`${API_BASE}/api/shorten`, {
+      const response = await fetch('https://url-shortener-c505.onrender.com/api/shorten', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originalUrl }),
-        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ originalUrl })
       });
 
       if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || 'Something went wrong');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to shorten URL');
       }
 
       const data = await response.json();
-      setShortUrl(`${API_BASE}/${data.shortCode}`);
+      setShortUrl(data.shortUrl);
     } catch (err) {
-      console.error('Fetch error:', err);
-      setError(
-        'Failed to fetch from backend. Make sure the server is running and CORS is enabled.'
-      );
+      setError(err.message);
     }
   };
 
   return (
-    <>
-      <input
-        type="text"
-        placeholder="Enter a long URL"
-        value={originalUrl}
-        onChange={(e) => setOriginalUrl(e.target.value)}
-        style={{ width: '100%', padding: '10px', marginTop: '20px' }}
-      />
-      <button
-        onClick={handleShorten}
-        style={{ width: '100%', padding: '10px', marginTop: '10px' }}
-      >
-        Shorten URL
-      </button>
-    </>
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="url"
+          placeholder="Enter URL to shorten"
+          value={originalUrl}
+          onChange={(e) => setOriginalUrl(e.target.value)}
+          required
+        />
+        <button type="submit">Shorten URL</button>
+      </form>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {shortUrl && (
+        <p>
+          Short URL: <a href={shortUrl} target="_blank" rel="noopener noreferrer">{shortUrl}</a>
+        </p>
+      )}
+    </div>
   );
 }
+
+export default UrlForm;
