@@ -13,6 +13,9 @@ export default function UrlForm({ setShortUrl, setError }) {
     }
   };
 
+  // Set backend URL directly to the Render URL for production
+  const API_BASE = 'https://url-shortener-c505.onrender.com';
+
   const handleShorten = async () => {
     setError('');
     setShortUrl('');
@@ -28,7 +31,7 @@ export default function UrlForm({ setShortUrl, setError }) {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:5001/api/shorten', {
+      const response = await fetch(`${API_BASE}/api/shorten`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ originalUrl }),
@@ -41,11 +44,12 @@ export default function UrlForm({ setShortUrl, setError }) {
       }
 
       const data = await response.json();
-      setShortUrl(`http://127.0.0.1:5001/${data.shortCode}`);
-
+      setShortUrl(`${API_BASE}/${data.shortCode}`);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('Failed to fetch from backend. Make sure the server is running and CORS is enabled.');
+      setError(
+        'Failed to fetch from backend. Make sure the server is running and CORS is enabled.'
+      );
     }
   };
 
